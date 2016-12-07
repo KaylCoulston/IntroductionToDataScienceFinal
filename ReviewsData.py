@@ -4,6 +4,8 @@ import nltk
 from nltk.text import Text
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+import nltk.classify.util
+from nltk.classify import NaiveBayesClassifier
 
 """
 The review is parsed in as an array of dictionaries of reviews.  The vast
@@ -77,7 +79,7 @@ class ReviewsData:
 
         stop_words = set(stopwords.words("english"))
         all_words = [words for words in all_words if not words in stop_words]
-        
+
         punctuation = list(string.punctuation)
         all_words = [words for words in all_words if not words in punctuation]
 
@@ -88,7 +90,7 @@ class ReviewsData:
         all_asin = []
         for rvw in self.reviews:
             all_asin.append(rvw["asin"])
-        
+
         all_asin = nltk.FreqDist(all_asin)
         return all_asin.most_common(amount)
 
@@ -98,10 +100,35 @@ class ReviewsData:
             for words in word_tokenize(rvw["reviewText"]):
                 if words in common:
                     reviews.append(rvw["asin"])
-        
+
         return reviews
+
+def word_feats(words):
+    return dict([(word, True) for word in words])
+
 def main():
-    r = ReviewsData("reviews_Video_Games_5.json.gz", 2000)
+    r = ReviewsData("reviews_Video_Games_5.json.gz", 10000)
+
+    feats = []
+    cutoffs = []
+    for score in [1.0, 2.0, 3.0, 4.0, 5.0]:
+        rev = r.GetReviewsOfScore(score)
+        feats.append([(word_feats(words["nltkText"]), str(score)) for words in rev])
+        cutoffs.append(len(feats[int(score-1.0)])*3/4)
+
+    trainfeats = []
+    testfeats = []
+    for idx,f in enumerate(feats):
+        trainfeats += f[:cutoffs[idx]] + f[:cutoffs[idx]]
+        testfeats += f[cutoffs[idx]:] + f[cutoffs[idx]:]
+        print 'train on %d instances, test on %d instances' % (len(trainfeats), len(testfeats))
+
+    classifier = NaiveBayesClassifier.train(trainfeats)
+    print 'accuracy:', nltk.classify.util.accuracy(classifier, testfeats)
+    classifier.show_most_informative_features()
+"""
+"""
+
 
 """
     #Some examples for how to use things:
@@ -114,7 +141,7 @@ def main():
 
     print r.CatagorizeByKey("asin").keys()
     print
-    
+
     one_star = r.GetReviewsOfScore(1.0)
     print "One Star Reviews Text: "
     for r in one_star:
