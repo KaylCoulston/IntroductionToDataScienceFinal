@@ -1,7 +1,9 @@
 import gzip
+import string
 import nltk
 from nltk.text import Text
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 """
 The review is parsed in as an array of dictionaries of reviews.  The vast
@@ -67,26 +69,55 @@ class ReviewsData:
 
         return subset
 
+    def GetMostCommonWords(self, amount):
+        all_words = []
+        for rvw in self.reviews:
+            for words in word_tokenize(rvw["reviewText"]):
+                all_words.append(words.lower())
+
+        stop_words = set(stopwords.words("english"))
+        all_words = [words for words in all_words if not words in stop_words]
+        
+        punctuation = list(string.punctuation)
+        all_words = [words for words in all_words if not words in punctuation]
+
+        all_words = nltk.FreqDist(all_words)
+        return all_words.most_common(amount)
+
+    def GetMostCommonAsin(self):
+        all_asin = []
+        for rvw in self.reviews:
+            all_asin.append(rvw["asin"])
+        
+        all_asin = nltk.FreqDist(all_asin)
+        return all_asin.most_common(amount)
+
+    def LinkWordsToReview(self, common):
+        reviews = []
+        for rvw in self.reviews:
+            for words in word_tokenize(rvw["reviewText"]):
+                if words in common:
+                    reviews.append(rvw["asin"])
+        
+        return reviews
 def main():
-    r = ReviewsData("reviews_Video_Games_5.json.gz", 100)
+    r = ReviewsData("reviews_Video_Games_5.json.gz", 2000)
 
 """
-    Some examples for how to use things:
-
+    #Some examples for how to use things:
     print "Possible Keys: "
     print r.GetPossibleKeys()
     print
 
     print "Subsetted by keys 'overall' and 'nltkText'"
-    print r.GetSubsetByKeys(["overall", "nltkText"])[0]
+    print r.GetSubsetByKeys(["overall", "nltkText"])[1]
 
     print r.CatagorizeByKey("asin").keys()
     print
-
+    
     one_star = r.GetReviewsOfScore(1.0)
     print "One Star Reviews Text: "
     for r in one_star:
         print r["reviewText"]
 """
-
 main()
