@@ -4,8 +4,6 @@ import nltk
 from nltk.text import Text
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-import nltk.classify.util
-from nltk.classify import NaiveBayesClassifier
 
 """
 The review is parsed in as an array of dictionaries of reviews.  The vast
@@ -50,7 +48,16 @@ class ReviewsData:
         return items
 
     def GetReviewsOfScore(self, score):
-        if type(score) is not float:
+        if type(score) is list:
+            lst = []
+            for s in score:
+                if type(s) is not float:
+                    raise TypeError("Error: Score should be 1.0, 2.0, etc, and should be a float")
+
+                lst += self.CatagorizeByKey("overall")[s]
+            return lst
+
+        elif type(score) is not float:
             raise TypeError("Error: Score should be 1.0, 2.0, etc, and should be a float")
 
         return self.CatagorizeByKey("overall")[score]
@@ -103,33 +110,6 @@ class ReviewsData:
 
         return reviews
 
-def word_feats(words):
-    return dict([(word, True) for word in words])
-
-def main():
-    r = ReviewsData("reviews_Video_Games_5.json.gz", 10000)
-
-    feats = []
-    cutoffs = []
-    for score in [1.0, 2.0, 3.0, 4.0, 5.0]:
-        rev = r.GetReviewsOfScore(score)
-        feats.append([(word_feats(words["nltkText"]), str(score)) for words in rev])
-        cutoffs.append(len(feats[int(score-1.0)])*3/4)
-
-    trainfeats = []
-    testfeats = []
-    for idx,f in enumerate(feats):
-        trainfeats += f[:cutoffs[idx]] + f[:cutoffs[idx]]
-        testfeats += f[cutoffs[idx]:] + f[cutoffs[idx]:]
-        print 'train on %d instances, test on %d instances' % (len(trainfeats), len(testfeats))
-
-    classifier = NaiveBayesClassifier.train(trainfeats)
-    print 'accuracy:', nltk.classify.util.accuracy(classifier, testfeats)
-    classifier.show_most_informative_features()
-"""
-"""
-
-
 """
     #Some examples for how to use things:
     print "Possible Keys: "
@@ -147,4 +127,3 @@ def main():
     for r in one_star:
         print r["reviewText"]
 """
-main()
