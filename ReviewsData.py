@@ -4,6 +4,7 @@ import nltk
 from nltk.text import Text
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+from datetime import datetime
 
 """
 The review is parsed in as an array of dictionaries of reviews.  The vast
@@ -30,11 +31,13 @@ class ReviewsData:
 
         reviews_file.close()
 
-        self.AddNltkReviewText()
+        #self.SanitizeText()
+        #self.AddNltkReviewText()
 
     def AddNltkReviewText(self):
         for rvw in self.reviews:
-            t = {"nltkText": Text(word_tokenize(rvw["reviewText"].lower()))}
+            t = {"nltkText": Text(word_tokenize(" ".join(rvw["saniText"]).lower()))}
+            #t = {"nltkText": Text(word_tokenize(rvw["reviewText"].lower()))}
             rvw.update(t)
 
     def CatagorizeByKey(self, key):
@@ -93,7 +96,7 @@ class ReviewsData:
         all_words = nltk.FreqDist(all_words)
         return all_words.most_common(amount)
 
-    def GetMostCommonAsin(self):
+    def GetMostCommonAsin(self, amount):
         all_asin = []
         for rvw in self.reviews:
             all_asin.append(rvw["asin"])
@@ -109,6 +112,75 @@ class ReviewsData:
                     reviews.append(rvw["asin"])
 
         return reviews
+
+    def SanitizeText(self):
+        for rvw in self.reviews:
+            all_words = []
+            for words in word_tokenize(rvw["reviewText"]):
+                all_words.append(words.lower())
+
+            stop_words = set(stopwords.words("english"))
+            all_words = [words for words in all_words if not words in stop_words]
+
+            punctuation = list(string.punctuation)
+            all_words = [words for words in all_words if not words in punctuation]
+
+            rvw["saniText"] = all_words
+
+    def Summarize(self):
+        ratings = [r["overall"] for r in self.reviews]
+        reviewer_ids = [r["reviewerID"] for r in self.reviews]
+        helpful_score = [r["helpful"][0] - r["helpful"][1] for r in self.reviews]
+        times = [r["unixReviewTime"] for r in self.reviews]
+        asins = [r["asin"] for r in self.reviews]
+        review_lengths = [len(r["reviewText"]) / 100 for r in self.reviews]
+
+        #>>> fdist = FreqDist(word.lower() for word in word_tokenize(sent))
+        ratings_dist = nltk.FreqDist(ratings)
+        reviewer_ids_dist = nltk.FreqDist(reviewer_ids)
+        asins_dist = nltk.FreqDist(asins)
+        helpful_score_dist = nltk.FreqDist(helpful_score)
+        review_lengths_dist = nltk.FreqDist(review_lengths)
+
+        """
+        print reviewer_ids_dist.most_common(10)
+        #print ratings_dist.pformat()
+        #print reviewer_ids_dist.pformat()
+        #print asins_dist .pformat()
+        print "ratings_dist plot"
+        print ratings_dist.plot(50)
+        #print helpful_tags_dist
+        print "asins_dist plot"
+        print asins_dist.plot(50)
+        print "reviewer_ids plot"
+        print reviewer_ids_dist.plot(50)
+        """
+
+        summary = {}
+        summary["NumReviews"] = len(self.reviews)
+        summary["NumItems"] = len(asins)
+        summary["EarliestReview"] = datetime.fromtimestamp(min(times))
+        summary["MostRecentReview"] = datetime.fromtimestamp(max(times))
+        summary["RatingsDist"] = ratings_dist.pformat()
+        r_lengths = [len(r["reviewText"]) for r in self.reviews]
+        summary["AvgReviewLength"] = sum(r_lengths) / float(len(r_lengths))
+        summary["AvgReviewsPerUser"] = float(reviewer_ids_dist.N()) / float(reviewer_ids_dist.B())
+        summary["AvgReviewsPerItem"] =  float(asins_dist.N()) / float(asins_dist.B())
+        summary["AvgNetHelpful"] = sum(helpful_score) / float(len(helpful_score))
+        summary["MostCommonAsins"] = asins_dist.most_common(5)
+        summary["MostCommonReviewerIDS"] = reviewer_ids_dist.most_common(5)
+        summary["RvwLengthDistInHundredsOfChars"] = review_lengths_dist.items()
+
+        review_lengths_dist.plot(1000)
+
+        #Review Keys = ['reviewerID', 'asin', 'reviewerName', 'helpful',
+        #'unixReviewTime', 'reviewText', 'overall', 'reviewTime', 'summary']
+
+        for key in summary.keys():
+            print key + ": "
+            print summary[key]
+
+        return summary
 
 """
     #Some examples for how to use things:

@@ -5,7 +5,10 @@ from nltk.classify import apply_features
 
 from ReviewsData import *
 
-# Same as reviewdatat class but takes one review
+porter = nltk.PorterStemmer()
+wnl = nltk.WordNetLemmatizer()
+
+# Same as reviewdata class but takes one review
 def get_most_common_words(rvw, amount):
     all_words = []
     for words in word_tokenize(rvw["reviewText"]):
@@ -16,6 +19,9 @@ def get_most_common_words(rvw, amount):
 
     punctuation = list(string.punctuation)
     all_words = [words for words in all_words if not words in punctuation]
+
+    all_words = [porter.stem(t) for t in all_words]
+    all_words = [wnl.lemmatize(t) for t in all_words]
 
     all_words = nltk.FreqDist(all_words)
     return all_words.most_common(amount)
@@ -52,20 +58,44 @@ def get_features(review):
     else:
         f["helpful"] = "n"
 
-    f["score"] = review["overall"]
+    #f["score"] = review["overall"]
 
-    # I think we need to better filter words from the nltkText rather than just
-    # adding every one. We could also construct our own preliminary classifier
-    # that takes the words of a review and outputs some sort of score as an
-    # aggregate.
-    most_common = [w[0] for w in get_most_common_words(review, 10)]
+    #I think we need to better filter words from the nltkText rather than just
+    #adding every one. We could also construct our own preliminary classifier
+    #that takes the words of a review and outputs some sort of score as an
+    #aggregate.
+    most_common = [w[0] for w in get_most_common_words(review, 20)]
     f.update(word_feats(most_common))
+
+    # Seeing if most common bigrams as features works better
+    #bigrams = nltk.bigrams(review["nltkText"])
+    #bigram_freq = nltk.FreqDist(bigrams)
+
+    ##print bigram_freq.most_common(5)
+    #for b in bigram_freq.most_common(10):
+    #    f.update({(b[0], True)})
 
     return f
 
 def main():
-    num_reviews = 1000
+    num_reviews = -1
     r = ReviewsData("reviews_Video_Games_5.json.gz", num_reviews)
+    #r = ReviewsData("reviews_Sports_and_Outdoors_5.json.gz", num_reviews)
+
+    r.Summarize()
+
+"""
+    ratings = [r["overall"] for r in r.reviews]
+    ratings_dist = nltk.FreqDist(ratings)
+    print "Num Reviews: " + str(len(ratings))
+    print "1.0 Star Reviews: " + str(ratings_dist.freq(1.0))
+    print "2.0 Star Reviews: " + str(ratings_dist.freq(2.0))
+    print "3.0 Star Reviews: " + str(ratings_dist.freq(3.0))
+    print "4.0 Star Reviews: " + str(ratings_dist.freq(4.0))
+    print "5.0 Star Reviews: " + str(ratings_dist.freq(5.0))
+
+    max_reviews_per_score = ratings_dist.freq(1.0)
+    data = []
     data = [label_review(rvw) for rvw in r.reviews]
 
     print get_features(data[0][0])
@@ -75,6 +105,7 @@ def main():
     classifier = NaiveBayesClassifier.train(trainfeats)
     print 'accuracy:', nltk.classify.util.accuracy(classifier, testfeats)
     classifier.show_most_informative_features()
+"""
 
 # Classification using words in review
 """
