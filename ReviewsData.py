@@ -14,7 +14,7 @@ that we need to really care right now since they should still have the fields
 we need.
 
 Review Keys = ['reviewerID', 'asin', 'reviewerName', 'helpful',
-'unixReviewTime', 'reviewText', 'overall', 'reviewTime', 'summary']
+'unixReviewTime', 'reviewText', 'overall', 'reviewTime', 'summary', 'featureWords']
 
 Also the key "nltkText" will be added which points to a ntlk Text instance for
 review text which has been lowercased

@@ -2,6 +2,7 @@ import nltk
 import nltk.classify.util
 from nltk.classify import NaiveBayesClassifier
 from nltk.classify import apply_features
+from random import shuffle
 
 from ReviewsData import *
 
@@ -25,6 +26,20 @@ def get_most_common_words(rvw, amount):
 
     all_words = nltk.FreqDist(all_words)
     return all_words.most_common(amount)
+
+def get_most_common_taggs(rvw):
+    all_words = []
+    tagged_text = nltk.pos_tag(word_tokenize(rvw["reviewText"]))
+    for tagged in tagged_text:
+         if tagged[1] == "JJ" or tagged[1] == "JJR" or tagged[1] == "JJS":
+            all_words.append(tagged[0])
+
+    all_words = nltk.FreqDist(all_words)
+    return all_words.most_common(1000)
+
+""" or tagged[1] == "VB" or tagged[1] == "JJR" or tagged[1] == "JJS" \
+or tagged[1] == "VBD" or tagged[1] == "VBD" or tagged[1] == "VBG" or tagged[1] == "VBP": """
+
 
 def word_feats(words):
     return dict([(word, True) for word in words])
@@ -64,7 +79,8 @@ def get_features(review):
     #adding every one. We could also construct our own preliminary classifier
     #that takes the words of a review and outputs some sort of score as an
     #aggregate.
-    most_common = [w[0] for w in get_most_common_words(review, 20)]
+    #most_common = [w[0] for w in get_most_common_words(review, 20)]
+    most_common = [w[0] for w in get_most_common_taggs(review)]
     f.update(word_feats(most_common))
 
     # Seeing if most common bigrams as features works better
@@ -79,36 +95,43 @@ def get_features(review):
 
 def main():
     num_reviews = -1
-    r = ReviewsData("reviews_Video_Games_5.json.gz", num_reviews)
+    r = ReviewsData("reviews_Video_Games_5_Even_Subset_Small.json.gz", num_reviews)
     #r = ReviewsData("reviews_Sports_and_Outdoors_5.json.gz", num_reviews)
 
-    r.Summarize()
+    #r.Summarize()
+    data = [label_review(rvw) for rvw in r.reviews]
+    """
 
-"""
     ratings = [r["overall"] for r in r.reviews]
     ratings_dist = nltk.FreqDist(ratings)
+    
     print "Num Reviews: " + str(len(ratings))
     print "1.0 Star Reviews: " + str(ratings_dist.freq(1.0))
     print "2.0 Star Reviews: " + str(ratings_dist.freq(2.0))
     print "3.0 Star Reviews: " + str(ratings_dist.freq(3.0))
     print "4.0 Star Reviews: " + str(ratings_dist.freq(4.0))
     print "5.0 Star Reviews: " + str(ratings_dist.freq(5.0))
+    
 
     max_reviews_per_score = ratings_dist.freq(1.0)
+    """
     data = []
     data = [label_review(rvw) for rvw in r.reviews]
+    shuffle(data)
 
+    num_reviews = len(data)
     print get_features(data[0][0])
-    trainfeats = apply_features(get_features, data[num_reviews/2:])
-    testfeats = apply_features(get_features, data[:num_reviews/2])
+    num_reviews = int(num_reviews * 0.75)
+    trainfeats = apply_features(get_features, data[:num_reviews])
+    testfeats = apply_features(get_features, data[num_reviews:])
 
     classifier = NaiveBayesClassifier.train(trainfeats)
     print 'accuracy:', nltk.classify.util.accuracy(classifier, testfeats)
     classifier.show_most_informative_features()
-"""
 
-# Classification using words in review
 """
+# Classification using words in review
+
     feats = []
     cutoffs = []
     for idx, score in enumerate([[1.0, 2.0], [4.0, 5.0]]):
@@ -130,6 +153,6 @@ def main():
     classifier = NaiveBayesClassifier.train(trainfeats)
     print 'accuracy:', nltk.classify.util.accuracy(classifier, testfeats)
     classifier.show_most_informative_features()
-"""
+    """
 
 main()
