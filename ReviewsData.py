@@ -81,18 +81,19 @@ class ReviewsData:
 
         return subset
 
-    def GetMostCommonTopics(self, amount):
+    def GetMostCommonTopics(self):
+        stop_words = set(stopwords.words("english"))
+        punctuation = list(string.punctuation)
         all_words = []
         for rvw in self.reviews:
+            review_words = []
             for word in nltk.pos_tag(word_tokenize(rvw["reviewText"])):
-                if word[1] == "NN":
-                    all_words.append(word[0].lower())
-
-        stop_words = set(stopwords.words("english"))
-        all_words = [words for words in all_words if not words in stop_words]
-
-        punctuation = list(string.punctuation)
-        all_words = [words for words in all_words if not words in punctuation]
+                #if word[1] == "NN" and word[0].lower() not in stop_words and \
+                #word[0].lower() not in punctuation and word[0].lower() not in \
+                #review_words:
+                if word[1] == "NN" and word[0].lower() not in review_words:
+                    review_words.append(word[0].lower())
+            all_words += review_words
 
         all_words = nltk.FreqDist(all_words)
         return all_words
@@ -159,14 +160,15 @@ class ReviewsData:
         helpful_score = [r["helpful"][0] - r["helpful"][1] for r in self.reviews]
         times = [r["unixReviewTime"] for r in self.reviews]
         asins = [r["asin"] for r in self.reviews]
-        review_lengths = [len(r["reviewText"]) / 100 for r in self.reviews]
+        #review_lengths = [len(word_tokenize(r["reviewText"])) for r in self.reviews]
+        #summary_lengths = [len(word_tokenize(r["summary"])) for r in self.reviews]
 
-        #>>> fdist = FreqDist(word.lower() for word in word_tokenize(sent))
         ratings_dist = nltk.FreqDist(ratings)
         reviewer_ids_dist = nltk.FreqDist(reviewer_ids)
         asins_dist = nltk.FreqDist(asins)
         helpful_score_dist = nltk.FreqDist(helpful_score)
-        review_lengths_dist = nltk.FreqDist(review_lengths)
+        #review_lengths_dist = nltk.FreqDist(review_lengths)
+        #summary_lengths_dist = nltk.FreqDist(summary_lengths)
 
         """
         print reviewer_ids_dist.most_common(10)
@@ -187,20 +189,19 @@ class ReviewsData:
         summary["NumItems"] = len(asins)
         summary["EarliestReview"] = datetime.fromtimestamp(min(times))
         summary["MostRecentReview"] = datetime.fromtimestamp(max(times))
-        summary["RatingsDist"] = ratings_dist.pformat()
-        r_lengths = [len(r["reviewText"]) for r in self.reviews]
-        summary["AvgReviewLength"] = sum(r_lengths) / float(len(r_lengths))
+        summary["RatingsDist"] = ratings_dist.most_common(10)
+        #r_lengths = [len(r["reviewText"]) for r in self.reviews]
+        #summary["AvgReviewLength"] = sum(r_lengths) / float(len(r_lengths))
         summary["AvgReviewsPerUser"] = float(reviewer_ids_dist.N()) / float(reviewer_ids_dist.B())
         summary["AvgReviewsPerItem"] =  float(asins_dist.N()) / float(asins_dist.B())
         summary["AvgNetHelpful"] = sum(helpful_score) / float(len(helpful_score))
         summary["MostCommonAsins"] = asins_dist.most_common(5)
         summary["MostCommonReviewerIDS"] = reviewer_ids_dist.most_common(5)
-        summary["RvwLengthDistInHundredsOfChars"] = review_lengths_dist.items()
-        summary["RatingsDist"] = ratings_dist
         summary["ReviewerIdsDist"] = reviewer_ids_dist
         summary["AsinsDist"] = asins_dist
         summary["HelpfulScoreDist"] = helpful_score_dist
-        summary["ReviewLengthsDist"] = review_lengths_dist
+        #summary["ReviewLengthsDist"] = review_lengths_dist
+        #summary["SummaryLengthDist"] = summary_lengths_dist
 
         #Review Keys = ['reviewerID', 'asin', 'reviewerName', 'helpful',
         #'unixReviewTime', 'reviewText', 'overall', 'reviewTime', 'summary']

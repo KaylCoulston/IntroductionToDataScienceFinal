@@ -9,9 +9,6 @@ def main():
     r = pickle.load(review_file)
     review_file.close()
 
-    #r.Summarize()
-    #print r.GetMostCommonTopics(40)
-
     classifier_file = open("review_classifier.pickle", "rb")
     classifier = pickle.load(classifier_file)
     classifier_file.close()
