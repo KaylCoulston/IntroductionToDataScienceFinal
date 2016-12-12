@@ -1,10 +1,10 @@
 import gzip
-import string
 import nltk
+import string
+from datetime import datetime
+from nltk.corpus import stopwords
 from nltk.text import Text
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from datetime import datetime
 
 """
 The review is parsed in as an array of dictionaries of reviews.  The vast
@@ -95,7 +95,7 @@ class ReviewsData:
         all_words = [words for words in all_words if not words in punctuation]
 
         all_words = nltk.FreqDist(all_words)
-        return all_words.most_common(amount)
+        return all_words
 
     def GetMostCommonAsin(self, amount):
         all_asin = []
@@ -136,15 +136,15 @@ class ReviewsData:
         self.Topic["version"]     = []
         self.Topic["gameplay"]    = []
 
-        #Might add a review twice in one specific list like Topic["story"] if story is 
+        #Might add a review twice in one specific list like Topic["story"] if story is
         #mentioned twice, shouldnt be to often so we will ignore this.
         for rvw in self.reviews:
             for word in word_tokenize(rvw["reviewText"]):
-                if word == "story": 
+                if word == "story":
                     self.Topic[word].append(rvw)
-                if word == "level": 
+                if word == "level":
                     self.Topic[word].append(rvw)
-                if word == "multiplayer": 
+                if word == "multiplayer":
                     self.Topic[word].append(rvw)
                 if word == "version":
                     self.Topic[word].append(rvw)
@@ -196,8 +196,11 @@ class ReviewsData:
         summary["MostCommonAsins"] = asins_dist.most_common(5)
         summary["MostCommonReviewerIDS"] = reviewer_ids_dist.most_common(5)
         summary["RvwLengthDistInHundredsOfChars"] = review_lengths_dist.items()
-
-        review_lengths_dist.plot(1000)
+        summary["RatingsDist"] = ratings_dist
+        summary["ReviewerIdsDist"] = reviewer_ids_dist
+        summary["AsinsDist"] = asins_dist
+        summary["HelpfulScoreDist"] = helpful_score_dist
+        summary["ReviewLengthsDist"] = review_lengths_dist
 
         #Review Keys = ['reviewerID', 'asin', 'reviewerName', 'helpful',
         #'unixReviewTime', 'reviewText', 'overall', 'reviewTime', 'summary']

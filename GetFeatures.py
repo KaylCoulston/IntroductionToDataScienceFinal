@@ -1,9 +1,15 @@
+from datetime import datetime
+from nltk.classify import apply_features
+from nltk.classify import NaiveBayesClassifier
+from nltk.corpus import stopwords
+from nltk.text import Text
+from nltk.tokenize import word_tokenize
+from random import shuffle
+import gzip
 import nltk
 import nltk.classify.util
-from nltk.classify import NaiveBayesClassifier
-from nltk.classify import apply_features
-from random import shuffle
 import pickle
+import string
 
 porter = nltk.PorterStemmer()
 wnl = nltk.WordNetLemmatizer()

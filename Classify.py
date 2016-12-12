@@ -5,8 +5,9 @@ from GetFeatures import *
 
 def main():
     #To get the most common topics we I ran this:
-    #r = ReviewsData("reviews_Video_Games_5.json.gz")
-    r = ReviewsData("reviews_Video_Games_5_Even_Subset_Small.json.gz")
+    review_file = open("review_data.pickle", "rb")
+    r = pickle.load(review_file)
+    review_file.close()
 
     #r.Summarize()
     #print r.GetMostCommonTopics(40)
