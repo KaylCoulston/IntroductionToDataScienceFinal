@@ -128,6 +128,31 @@ class ReviewsData:
 
             rvw["saniText"] = all_words
 
+    def SeperateCommonTopics(self):
+        self.Topic = {}
+        self.Topic["story"]       = []
+        self.Topic["level"]       = []
+        self.Topic["multiplayer"] = []
+        self.Topic["version"]     = []
+        self.Topic["gameplay"]    = []
+
+        #Might add a review twice in one specific list like Topic["story"] if story is 
+        #mentioned twice, shouldnt be to often so we will ignore this.
+        for rvw in self.reviews:
+            for word in word_tokenize(rvw["reviewText"]):
+                if word == "story": 
+                    self.Topic[word].append(rvw)
+                if word == "level": 
+                    self.Topic[word].append(rvw)
+                if word == "multiplayer": 
+                    self.Topic[word].append(rvw)
+                if word == "version":
+                    self.Topic[word].append(rvw)
+                if word == "gameplay":
+                    self.Topic[word].append(rvw)
+
+
+
     def Summarize(self):
         ratings = [r["overall"] for r in self.reviews]
         reviewer_ids = [r["reviewerID"] for r in self.reviews]
