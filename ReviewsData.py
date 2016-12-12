@@ -81,11 +81,12 @@ class ReviewsData:
 
         return subset
 
-    def GetMostCommonWords(self, amount):
+    def GetMostCommonTopics(self, amount):
         all_words = []
         for rvw in self.reviews:
-            for words in word_tokenize(rvw["reviewText"]):
-                all_words.append(words.lower())
+            for word in nltk.pos_tag(word_tokenize(rvw["reviewText"])):
+                if word[1] == "NN":
+                    all_words.append(word[0].lower())
 
         stop_words = set(stopwords.words("english"))
         all_words = [words for words in all_words if not words in stop_words]
